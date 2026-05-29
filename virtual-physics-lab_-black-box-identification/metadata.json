@@ -1,0 +1,5 @@
+{
+  "name": "Virtual Physics Lab: Black Box Identification",
+  "description": "Identify unknown electronic components (Resistor, Capacitor, Inductor) inside a black box by analyzing frequency response.",
+  "requestFramePermissions": []
+}
