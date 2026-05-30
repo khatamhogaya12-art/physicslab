@@ -7,7 +7,7 @@ import React, { useState, useRef } from "react";
 import { motion } from "motion/react";
 import { OCEAN_QUESTIONNAIRE, LabStats, OceanResult } from "../types";
 import { Brain, Sparkles, UserCheck, TrendingUp, Compass, Award, ShieldAlert, BookOpen, RefreshCw, Download } from "lucide-react";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 
 interface OceanAnalysisCardProps {
