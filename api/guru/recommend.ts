@@ -1,13 +1,6 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
+import { generateContentWithFallback } from "../lib/llm.js";
 
-function getGeminiClient(reqKey?: string): GoogleGenAI {
-  const key = reqKey || process.env.GEMINI_API_KEY || "AIzaSyDl9DpiTEZrWrl5OqpRekCNdJGhjBMjjQY";
-  return new GoogleGenAI({
-    apiKey: key,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      }
     }
   });
 }

@@ -59,11 +59,14 @@ export default function App() {
   // API Key Settings Modal
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [tempApiKey, setTempApiKey] = useState("");
+  const [selectedModel, setSelectedModel] = useState<string>("gemini-3.5-flash");
+  const [tempModel, setTempModel] = useState<string>("gemini-3.5-flash");
 
   // Sync tempApiKey with localStorage when opening the settings modal
   useEffect(() => {
     if (isSettingsOpen) {
       setTempApiKey(localStorage.getItem("yantra_nidhi_gemini_api_key") || "");
+      setTempModel(localStorage.getItem("yantra_nidhi_ai_model") || "gemini-3.5-flash");
     }
   }, [isSettingsOpen]);
 
@@ -73,6 +76,8 @@ export default function App() {
     } else {
       localStorage.removeItem("yantra_nidhi_gemini_api_key");
     }
+    localStorage.setItem("yantra_nidhi_ai_model", tempModel);
+    setSelectedModel(tempModel);
     setIsSettingsOpen(false);
   };
 
@@ -316,8 +321,10 @@ export default function App() {
 
     try {
       const customKey = localStorage.getItem("yantra_nidhi_gemini_api_key");
+      const aiModel = localStorage.getItem("yantra_nidhi_ai_model") || "gemini-3.5-flash";
       const headers: Record<string, string> = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "x-ai-model": aiModel
       };
       if (customKey) {
         headers["x-gemini-api-key"] = customKey;
@@ -428,8 +435,10 @@ export default function App() {
 
     try {
       const customKey = localStorage.getItem("yantra_nidhi_gemini_api_key");
+      const aiModel = localStorage.getItem("yantra_nidhi_ai_model") || "gemini-3.5-flash";
       const headers: Record<string, string> = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "x-ai-model": aiModel
       };
       if (customKey) {
         headers["x-gemini-api-key"] = customKey;

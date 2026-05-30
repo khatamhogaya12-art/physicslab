@@ -64,8 +64,10 @@ export default function OceanAnalysisCard({ labStats, onResetStats }: OceanAnaly
 
     try {
       const customKey = localStorage.getItem("yantra_nidhi_gemini_api_key");
+      const aiModel = localStorage.getItem("yantra_nidhi_ai_model") || "gemini-3.5-flash";
       const headers: Record<string, string> = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "x-ai-model": aiModel
       };
       if (customKey) {
         headers["x-gemini-api-key"] = customKey;

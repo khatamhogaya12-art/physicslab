@@ -1,4 +1,5 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
+import { generateContentWithFallback } from "../lib/llm.js";
 
 const EXPERIMENT_NAMES: Record<string, string> = {
   black_box: "Black Box Experiment (identifying unknown impedance components in an AC/DC circuit)",
@@ -9,18 +10,6 @@ const EXPERIMENT_NAMES: Record<string, string> = {
   energy_gap: "Energy Gap of Semiconductor (reverse bias saturation current of a p-n diode vs temperature change)",
   photodiode: "Characteristics of Photodiode (photocurrent vs light intensity and reverse bias profiles)"
 };
-
-function getGeminiClient(reqKey?: string): GoogleGenAI {
-  const key = reqKey || process.env.GEMINI_API_KEY || "AIzaSyDl9DpiTEZrWrl5OqpRekCNdJGhjBMjjQY";
-  return new GoogleGenAI({
-    apiKey: key,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      }
-    }
-  });
-}
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
@@ -40,43 +29,45 @@ export default async function handler(req: any, res: any) {
       : "Generate a standard, high-quality verbal interview viva question suitable for an undergraduate engineering physics/electronic instruments lab. Keep it crisp, focusing on theory, safety protocols, or physical interpretations.";
 
     const systemPrompt = `You are an expert Physics Laboratory Professor conducting a viva-voce oral examination for the app "Yantra Nidhi" for the experiment: ${expName}.
-    Your goal is to test the student's theoretical grasp, practical insight, and conceptual understanding.
-    ${simplificationInstruction}
-    
-    Generate a clear viva question. You MUST return your response as a valid JSON object matching this schema:
-    {
-      "question": "The question string",
-      "type": "open" or "mcq",
-      "options": ["Option A", "Option B", "Option C", "Option D"] // include only if type is "mcq" (provide 4 realistic options)
-    }`;
+Your goal is to test the student's theoretical grasp, practical insight, and conceptual understanding.
+${simplificationInstruction}
+
+${chatHistoryPrompt}
+
+Generate a clear viva question. You MUST return your response as a valid JSON object matching this schema:
+{
+  "question": "The question string",
+  "type": "open" or "mcq",
+  "options": ["Option A", "Option B", "Option C", "Option D"] // include only if type is "mcq" (provide 4 realistic options)
+}`;
+
+    const userPrompt = `Generate the next ${requestMoreSimple ? 'simplified ' : ''}viva question now.`;
+
+    const schema = {
+      type: Type.OBJECT,
+      properties: {
+        question: { type: Type.STRING },
+        type: { type: Type.STRING },
+        options: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING }
+        }
+      },
+      required: ["question", "type"]
+    };
 
     const reqKey = req.headers['x-gemini-api-key'] as string | undefined;
-    const ai = getGeminiClient(reqKey);
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: [
-        { text: systemPrompt },
-        { text: chatHistoryPrompt },
-        { text: `Generate the next ${requestMoreSimple ? 'simplified ' : ''}viva question now.` }
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            question: { type: Type.STRING },
-            type: { type: Type.STRING },
-            options: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            }
-          },
-          required: ["question", "type"]
-        }
-      }
-    });
+    const selectedModel = req.headers['x-ai-model'] || "gemini-3.5-flash";
 
-    const resultText = response.text || "{}";
+    const resultText = await generateContentWithFallback(
+      systemPrompt, 
+      userPrompt, 
+      schema, 
+      selectedModel as string, 
+      reqKey, 
+      reqKey
+    );
+
     res.json(JSON.parse(resultText));
   } catch (error: any) {
     console.error("Error generating viva question:", error);
