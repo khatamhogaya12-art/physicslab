@@ -265,7 +265,7 @@ export const EXPERIMENTS_LIST: Experiment[] = [
   },
   {
     id: "photodiode",
-    title: "Characteristics of Photodiode",
+    title: "Characteristics of Phododiode (For Viva, Conceptual)",
     subtitle: "Photon Absorption Current vs Distal Illumination",
     objective: "To investigate reverse bias photo currents of a Silicon photodiode under various radiant flux densities and calculate responsive levels.",
     theory: "A photodiode operates in reverse bias. When light of matching energy falls on the depletion zone, it creates electron-hole pairs. The reverse photocurrent I_p is directly proportional to illumination intensity: I_total = I_dark + I_photo where I_photo \u221d \u03a6 (lux). Since intensity from a source drops with distance 'd' via inverse square law (\u03a6 \u221d 1/d\u00b2), photocurrent rises linearly with light level or inversely with square distance.",
