@@ -1,4 +1,5 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
+import { generateContentWithFallback } from "../lib/llm.js";
 
 const EXPERIMENT_NAMES: Record<string, string> = {
   black_box: "Black Box Experiment (identifying unknown impedance components in an AC/DC circuit)",
@@ -10,14 +11,6 @@ const EXPERIMENT_NAMES: Record<string, string> = {
   photodiode: "Characteristics of Photodiode (photocurrent vs light intensity and reverse bias profiles)"
 };
 
-function getGeminiClient(reqKey?: string): GoogleGenAI {
-  const key = reqKey || process.env.GEMINI_API_KEY || "AIzaSyDl9DpiTEZrWrl5OqpRekCNdJGhjBMjjQY";
-  return new GoogleGenAI({
-    apiKey: key,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      }
     }
   });
 }
@@ -65,13 +58,9 @@ export default async function handler(req: any, res: any) {
     }`;
 
     const reqKey = req.headers['x-gemini-api-key'] as string | undefined;
-    const ai = getGeminiClient(reqKey);
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: [{ text: systemPrompt }],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
+    const selectedModel = req.headers['x-ai-model'] || "gemini-3.5-flash";
+
+    const schema = {
           type: Type.OBJECT,
           properties: {
             correct: { type: Type.BOOLEAN },
@@ -91,11 +80,16 @@ export default async function handler(req: any, res: any) {
             }
           },
           required: ["correct", "score", "feedback", "explanation", "traitMarkers"]
-        }
-      }
-    });
+        };
 
-    const resultText = response.text || "{}";
+    const resultText = await generateContentWithFallback(
+      systemPrompt, 
+      '', 
+      schema, 
+      selectedModel as string, 
+      reqKey, 
+      reqKey
+    );
     res.json(JSON.parse(resultText));
   } catch (error: any) {
     console.error("Error evaluating viva response:", error);

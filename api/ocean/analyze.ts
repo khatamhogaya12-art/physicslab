@@ -1,13 +1,6 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
+import { generateContentWithFallback } from "../lib/llm.js";
 
-function getGeminiClient(reqKey?: string): GoogleGenAI {
-  const key = reqKey || process.env.GEMINI_API_KEY || "AIzaSyDl9DpiTEZrWrl5OqpRekCNdJGhjBMjjQY";
-  return new GoogleGenAI({
-    apiKey: key,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      }
     }
   });
 }
@@ -101,13 +94,9 @@ Return your response as a valid JSON object matching this exact schema:
 }`;
 
     const reqKey = req.headers['x-gemini-api-key'] as string | undefined;
-    const ai = getGeminiClient(reqKey);
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: [{ text: systemPrompt }],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
+    const selectedModel = req.headers['x-ai-model'] || "gemini-3.5-flash";
+
+    const schema = {
           type: Type.OBJECT,
           properties: {
             scores: {
@@ -167,11 +156,16 @@ Return your response as a valid JSON object matching this exact schema:
             }
           },
           required: ["scores", "traits", "archetype", "archetypeSubtitle", "natureDescription", "studyAdvice"]
-        }
-      }
-    });
+        };
 
-    const resultText = response.text || "{}";
+    const resultText = await generateContentWithFallback(
+      systemPrompt, 
+      '', 
+      schema, 
+      selectedModel as string, 
+      reqKey, 
+      reqKey
+    );
     res.json(JSON.parse(resultText));
   } catch (error: any) {
     console.error("Error analyzing personality profile:", error);
