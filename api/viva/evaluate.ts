@@ -11,10 +11,6 @@ const EXPERIMENT_NAMES: Record<string, string> = {
   photodiode: "Characteristics of Photodiode (photocurrent vs light intensity and reverse bias profiles)"
 };
 
-    }
-  });
-}
-
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -61,30 +57,30 @@ export default async function handler(req: any, res: any) {
     const selectedModel = req.headers['x-ai-model'] || "gemini-3.5-flash";
 
     const schema = {
+      type: Type.OBJECT,
+      properties: {
+        correct: { type: Type.BOOLEAN },
+        score: { type: Type.INTEGER },
+        feedback: { type: Type.STRING },
+        explanation: { type: Type.STRING },
+        traitMarkers: {
           type: Type.OBJECT,
           properties: {
-            correct: { type: Type.BOOLEAN },
-            score: { type: Type.INTEGER },
-            feedback: { type: Type.STRING },
-            explanation: { type: Type.STRING },
-            traitMarkers: {
-              type: Type.OBJECT,
-              properties: {
-                openness: { type: Type.INTEGER },
-                conscientiousness: { type: Type.INTEGER },
-                extraversion: { type: Type.INTEGER },
-                agreeableness: { type: Type.INTEGER },
-                neuroticism: { type: Type.INTEGER }
-              },
-              required: ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"]
-            }
+            openness: { type: Type.INTEGER },
+            conscientiousness: { type: Type.INTEGER },
+            extraversion: { type: Type.INTEGER },
+            agreeableness: { type: Type.INTEGER },
+            neuroticism: { type: Type.INTEGER }
           },
-          required: ["correct", "score", "feedback", "explanation", "traitMarkers"]
-        };
+          required: ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"]
+        }
+      },
+      required: ["correct", "score", "feedback", "explanation", "traitMarkers"]
+    };
 
     const resultText = await generateContentWithFallback(
       systemPrompt, 
-      '', 
+      "Evaluate the student's answer now.", 
       schema, 
       selectedModel as string, 
       reqKey, 

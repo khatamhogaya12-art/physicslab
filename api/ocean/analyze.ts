@@ -1,10 +1,6 @@
 import { Type } from "@google/genai";
 import { generateContentWithFallback } from "../lib/llm.js";
 
-    }
-  });
-}
-
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -97,70 +93,70 @@ Return your response as a valid JSON object matching this exact schema:
     const selectedModel = req.headers['x-ai-model'] || "gemini-3.5-flash";
 
     const schema = {
+      type: Type.OBJECT,
+      properties: {
+        scores: {
           type: Type.OBJECT,
           properties: {
-            scores: {
+            o: { type: Type.INTEGER },
+            c: { type: Type.INTEGER },
+            e: { type: Type.INTEGER },
+            a: { type: Type.INTEGER },
+            n: { type: Type.INTEGER }
+          },
+          required: ["o", "c", "e", "a", "n"]
+        },
+        traits: {
+          type: Type.OBJECT,
+          properties: {
+            o: {
               type: Type.OBJECT,
-              properties: {
-                o: { type: Type.INTEGER },
-                c: { type: Type.INTEGER },
-                e: { type: Type.INTEGER },
-                a: { type: Type.INTEGER },
-                n: { type: Type.INTEGER }
-              },
-              required: ["o", "c", "e", "a", "n"]
+              properties: { label: { type: Type.STRING }, val: { type: Type.INTEGER }, desc: { type: Type.STRING } },
+              required: ["label", "val", "desc"]
             },
-            traits: {
+            c: {
               type: Type.OBJECT,
-              properties: {
-                o: {
-                  type: Type.OBJECT,
-                  properties: { label: { type: Type.STRING }, val: { type: Type.INTEGER }, desc: { type: Type.STRING } },
-                  required: ["label", "val", "desc"]
-                },
-                c: {
-                  type: Type.OBJECT,
-                  properties: { label: { type: Type.STRING }, val: { type: Type.INTEGER }, desc: { type: Type.STRING } },
-                  required: ["label", "val", "desc"]
-                },
-                e: {
-                  type: Type.OBJECT,
-                  properties: { label: { type: Type.STRING }, val: { type: Type.INTEGER }, desc: { type: Type.STRING } },
-                  required: ["label", "val", "desc"]
-                },
-                a: {
-                  type: Type.OBJECT,
-                  properties: { label: { type: Type.STRING }, val: { type: Type.INTEGER }, desc: { type: Type.STRING } },
-                  required: ["label", "val", "desc"]
-                },
-                n: {
-                  type: Type.OBJECT,
-                  properties: { label: { type: Type.STRING }, val: { type: Type.INTEGER }, desc: { type: Type.STRING } },
-                  required: ["label", "val", "desc"]
-                }
-              },
-              required: ["o", "c", "e", "a", "n"]
+              properties: { label: { type: Type.STRING }, val: { type: Type.INTEGER }, desc: { type: Type.STRING } },
+              required: ["label", "val", "desc"]
             },
-            archetype: { type: Type.STRING },
-            archetypeSubtitle: { type: Type.STRING },
-            natureDescription: { type: Type.STRING },
-            studyAdvice: {
+            e: {
               type: Type.OBJECT,
-              properties: {
-                strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
-                weaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
-                preparationTips: { type: Type.ARRAY, items: { type: Type.STRING } },
-                examStrategy: { type: Type.STRING }
-              },
-              required: ["strengths", "weaknesses", "preparationTips", "examStrategy"]
+              properties: { label: { type: Type.STRING }, val: { type: Type.INTEGER }, desc: { type: Type.STRING } },
+              required: ["label", "val", "desc"]
+            },
+            a: {
+              type: Type.OBJECT,
+              properties: { label: { type: Type.STRING }, val: { type: Type.INTEGER }, desc: { type: Type.STRING } },
+              required: ["label", "val", "desc"]
+            },
+            n: {
+              type: Type.OBJECT,
+              properties: { label: { type: Type.STRING }, val: { type: Type.INTEGER }, desc: { type: Type.STRING } },
+              required: ["label", "val", "desc"]
             }
           },
-          required: ["scores", "traits", "archetype", "archetypeSubtitle", "natureDescription", "studyAdvice"]
-        };
+          required: ["o", "c", "e", "a", "n"]
+        },
+        archetype: { type: Type.STRING },
+        archetypeSubtitle: { type: Type.STRING },
+        natureDescription: { type: Type.STRING },
+        studyAdvice: {
+          type: Type.OBJECT,
+          properties: {
+            strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
+            weaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
+            preparationTips: { type: Type.ARRAY, items: { type: Type.STRING } },
+            examStrategy: { type: Type.STRING }
+          },
+          required: ["strengths", "weaknesses", "preparationTips", "examStrategy"]
+        }
+      },
+      required: ["scores", "traits", "archetype", "archetypeSubtitle", "natureDescription", "studyAdvice"]
+    };
 
     const resultText = await generateContentWithFallback(
       systemPrompt, 
-      '', 
+      "Generate the detailed OCEAN analysis profile now based on the provided data.", 
       schema, 
       selectedModel as string, 
       reqKey, 
