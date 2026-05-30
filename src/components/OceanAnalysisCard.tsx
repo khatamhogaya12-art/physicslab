@@ -3,10 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "motion/react";
 import { OCEAN_QUESTIONNAIRE, LabStats, OceanResult } from "../types";
-import { Brain, Sparkles, UserCheck, TrendingUp, Compass, Award, ShieldAlert, BookOpen, RefreshCw } from "lucide-react";
+import { Brain, Sparkles, UserCheck, TrendingUp, Compass, Award, ShieldAlert, BookOpen, RefreshCw, Download } from "lucide-react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface OceanAnalysisCardProps {
   labStats: LabStats;
@@ -19,6 +21,8 @@ export default function OceanAnalysisCard({ labStats, onResetStats }: OceanAnaly
   const [result, setResult] = useState<OceanResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [currentStep, setCurrentStep] = useState(0);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   // Divide 15 questions into steps of 5 for a clean wizard feel
   const questionsPerPage = 5;
@@ -101,6 +105,44 @@ export default function OceanAnalysisCard({ labStats, onResetStats }: OceanAnaly
     setResult(null);
     setCurrentStep(0);
     setErrorMsg("");
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!reportRef.current) return;
+    try {
+      setIsGeneratingPdf(true);
+      
+      // Delay slightly so UI state can update
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2, // High resolution
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff" // Ensure white background
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      const now = new Date();
+      const timestamp = now.toISOString().replace(/[:.]/g, '-');
+      pdf.save(`OCEAN_Profile_Report_${timestamp}.pdf`);
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      setErrorMsg("Failed to generate PDF report.");
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   // Trait color guides
@@ -290,6 +332,7 @@ export default function OceanAnalysisCard({ labStats, onResetStats }: OceanAnaly
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
+          <div ref={reportRef} className="space-y-6 bg-slate-50/20 p-1 md:p-2 -mx-1 md:-mx-2 rounded-2xl">
           {/* Header section with Dynamic Archetype */}
           <div className="bg-slate-900 text-white rounded-2xl p-6 relative overflow-hidden shadow-md">
             <div className="absolute right-0 bottom-0 opacity-10 translate-x-1/6 translate-y-1/6">
@@ -411,8 +454,22 @@ export default function OceanAnalysisCard({ labStats, onResetStats }: OceanAnaly
               </p>
             </div>
           </div>
+          </div>
 
-          <div className="flex justify-center pt-2">
+          <div className="flex justify-center pt-2 gap-4 flex-wrap">
+            <button
+              onClick={handleDownloadPdf}
+              disabled={isGeneratingPdf}
+              type="button"
+              className="px-6 py-2 bg-gradient-to-r from-slate-800 to-slate-900 hover:brightness-110 rounded-xl text-xs font-semibold text-white shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-slate-500/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+            >
+              {isGeneratingPdf ? (
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              ) : (
+                <Download className="w-3.5 h-3.5" />
+              )}
+              {isGeneratingPdf ? "Generating PDF..." : "Download PDF Report"}
+            </button>
             <button
               onClick={handleResetTest}
               type="button"
