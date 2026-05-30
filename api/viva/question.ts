@@ -11,7 +11,7 @@ const EXPERIMENT_NAMES: Record<string, string> = {
 };
 
 function getGeminiClient(reqKey?: string): GoogleGenAI {
-  const key = reqKey || process.env.GEMINI_API_KEY || "";
+  const key = reqKey || process.env.GEMINI_API_KEY || "AIzaSyDl9DpiTEZrWrl5OqpRekCNdJGhjBMjjQY";
   return new GoogleGenAI({
     apiKey: key,
     httpOptions: {
