@@ -8,7 +8,8 @@ import { motion } from "motion/react";
 import { OCEAN_QUESTIONNAIRE, LabStats, OceanResult } from "../types";
 import { Brain, Sparkles, UserCheck, TrendingUp, Compass, Award, ShieldAlert, BookOpen, RefreshCw, Download } from "lucide-react";
 import * as jsPDFModule from "jspdf";
-import html2canvas from "html2canvas";
+// @ts-ignore
+import domtoimage from "dom-to-image-more";
 
 interface OceanAnalysisCardProps {
   labStats: LabStats;
@@ -115,14 +116,13 @@ export default function OceanAnalysisCard({ labStats, onResetStats }: OceanAnaly
       // Delay slightly so UI state can update
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2, // High resolution
-        useCORS: true,
-        logging: true, // Enable logging to see if it hangs
-        backgroundColor: "#ffffff" // Ensure white background
+      const el = reportRef.current;
+      const imgData = await domtoimage.toPng(el, {
+        bgcolor: "#ffffff",
+        quality: 1.0,
+        width: el.offsetWidth,
+        height: el.offsetHeight
       });
-      
-      const imgData = canvas.toDataURL('image/png');
       
       // Bulletproof jsPDF constructor lookup
       const JsPDFConstructor = (jsPDFModule as any).default?.jsPDF || (jsPDFModule as any).default || (jsPDFModule as any).jsPDF || jsPDFModule;
@@ -134,7 +134,7 @@ export default function OceanAnalysisCard({ labStats, onResetStats }: OceanAnaly
       });
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = (el.offsetHeight * pdfWidth) / el.offsetWidth;
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
