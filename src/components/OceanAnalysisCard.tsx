@@ -7,7 +7,7 @@ import React, { useState, useRef } from "react";
 import { motion } from "motion/react";
 import { OCEAN_QUESTIONNAIRE, LabStats, OceanResult } from "../types";
 import { Brain, Sparkles, UserCheck, TrendingUp, Compass, Award, ShieldAlert, BookOpen, RefreshCw, Download } from "lucide-react";
-import { jsPDF } from "jspdf";
+import * as jsPDFModule from "jspdf";
 import html2canvas from "html2canvas";
 
 interface OceanAnalysisCardProps {
@@ -118,12 +118,16 @@ export default function OceanAnalysisCard({ labStats, onResetStats }: OceanAnaly
       const canvas = await html2canvas(reportRef.current, {
         scale: 2, // High resolution
         useCORS: true,
-        logging: false,
+        logging: true, // Enable logging to see if it hangs
         backgroundColor: "#ffffff" // Ensure white background
       });
       
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
+      
+      // Bulletproof jsPDF constructor lookup
+      const JsPDFConstructor = (jsPDFModule as any).default?.jsPDF || (jsPDFModule as any).default || (jsPDFModule as any).jsPDF || jsPDFModule;
+      
+      const pdf = new JsPDFConstructor({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
@@ -137,9 +141,10 @@ export default function OceanAnalysisCard({ labStats, onResetStats }: OceanAnaly
       const now = new Date();
       const timestamp = now.toISOString().replace(/[:.]/g, '-');
       pdf.save(`OCEAN_Profile_Report_${timestamp}.pdf`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to generate PDF:", error);
       setErrorMsg("Failed to generate PDF report.");
+      alert(`PDF Generation Error: ${error?.message || error}`);
     } finally {
       setIsGeneratingPdf(false);
     }
